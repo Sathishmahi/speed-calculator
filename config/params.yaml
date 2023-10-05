@@ -1,0 +1,8 @@
+params:
+  iou_ther: 0.45
+  wanted_class_ids: [2,7,3]
+  conf_ther: 0.65
+  line1_coor: [160,504,1117,499]
+  line2_coor: [485,127,812,124]
+  l1_l2_m: 50
+  distance_bet_l1_l2_in_px: 380

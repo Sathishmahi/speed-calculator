@@ -1,0 +1,7 @@
+artifacts:
+  root_dir: artifact
+
+speed_calculator:
+  root_dir: speed_calculator
+  input_video_file_name: input.mp4
+  output_video_file_name: output.mp4

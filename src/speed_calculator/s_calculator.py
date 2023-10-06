@@ -91,7 +91,7 @@ class SpeedCalCulator:
             self.car_tracker_dict[id] = []
             self.car_tracker_dict[id].append(p)
 
-
+        return frame
 
     # Method to process each frame of the video
     def process(self, frame, c):
@@ -147,7 +147,15 @@ class SpeedCalCulator:
 
                 self.frame_1 = False
                 color = self.color_provider(id)
-                self.car_tracker(id, frame, center_point)
+                # self.car_tracker(id, frame, center_point)
+                if id in self.car_tracker_dict:
+                    if len(self.car_tracker_dict[id]) > 2:
+                        for idx in range(len(self.car_tracker_dict[id])-1):
+                            cv2.line(frame, self.car_tracker_dict[id][idx], self.car_tracker_dict[id][idx + 1],self.car_tracker_dict[id],2 )
+                else:
+                    self.car_tracker_dict[id] = []
+                    self.car_tracker_dict[id].append(center_point)
+                
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cvzone.putTextRect(frame, f"#id {id}", (x1, y1 - 10), offset=1, scale=1, thickness=1)
 

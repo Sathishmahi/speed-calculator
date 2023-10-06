@@ -6,3 +6,4 @@ params:
   line2_coor: [485,127,812,124]
   l1_l2_m: 50
   distance_bet_l1_l2_in_px: 380
+  model_name: yolov8s.pt

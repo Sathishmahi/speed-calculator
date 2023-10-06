@@ -1,4 +1,4 @@
-artifacts:
+artifact:
   root_dir: artifact
 
 speed_calculator:

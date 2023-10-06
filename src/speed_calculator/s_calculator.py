@@ -151,10 +151,13 @@ class SpeedCalCulator:
                 if id in self.car_tracker_dict:
                     if len(self.car_tracker_dict[id]) > 2:
                         for idx in range(len(self.car_tracker_dict[id])-1):
-                            cv2.line(frame, self.car_tracker_dict[id][idx], self.car_tracker_dict[id][idx + 1],self.car_tracker_dict[id],2 )
+                            cv2.line(frame, self.car_tracker_dict[id][idx], self.car_tracker_dict[id][idx + 1],self.color_dict[id],2 )
+                    self.car_tracker_dict[id].append(center_point)
                 else:
                     self.car_tracker_dict[id] = []
                     self.car_tracker_dict[id].append(center_point)
+
+                # print(self.car_tracker_dict)
                 
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cvzone.putTextRect(frame, f"#id {id}", (x1, y1 - 10), offset=1, scale=1, thickness=1)
@@ -244,4 +247,5 @@ if __name__ == "__main__":
     print(f"<<<<<  START   >>>>>")
     sc = SpeedCalCulator()
     sc.combine_all()
+    print(sc.car_tracker_dict)
     print(f"<<<<<  END   >>>>>")

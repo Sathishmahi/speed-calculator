@@ -139,7 +139,7 @@ class SpeedCalCulator:
             cen = leg[-1]
 
             cv2.circle(frame, cen, self.pixel_to_fill, c, cv2.FILLED)
-            cvzone.putTextRect( frame,txt,(c[0],c[1]+10) ,offset=1,scale=1,thickness=1)
+            cvzone.putTextRect( frame,txt,(cen[0]+20,cen[1]+20) ,offset=1,scale=1,thickness=1)
 
 
         return frame

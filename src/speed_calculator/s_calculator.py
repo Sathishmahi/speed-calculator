@@ -57,6 +57,7 @@ class SpeedCalCulator:
             "green": ["normal speed", (0, 255, 0), (1035, 80)],
         }
         self.pixel_to_fill = 10
+        self.car_tracker_dict = {}
 
     # Method to initialize the YOLO model
     def model_initializer(self):
@@ -80,6 +81,17 @@ class SpeedCalCulator:
                     if color not in self.color_dict.values():
                         break
             self.color_dict[id] = color
+
+    def car_tracker(self,id,frame,p):
+        if id in self.car_tracker_dict:
+            if len(self.car_tracker_dict[id]) > 2:
+                for idx in range(len(self.car_tracker_dict[id])-1):
+                    cv2.line(frame, self.car_tracker_dict[id][idx], self.car_tracker_dict[id][idx + 1],self.car_tracker_dict[id],1 )
+        else:
+            self.car_tracker_dict[id] = []
+            self.car_tracker_dict[id].append(p)
+
+
 
     # Method to process each frame of the video
     def process(self, frame, c):
@@ -135,6 +147,7 @@ class SpeedCalCulator:
 
                 self.frame_1 = False
                 color = self.color_provider(id)
+                self.car_tracker(id, frame, center_point)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cvzone.putTextRect(frame, f"#id {id}", (x1, y1 - 10), offset=1, scale=1, thickness=1)
 
@@ -162,7 +175,7 @@ class SpeedCalCulator:
 
             cv2.circle(frame, cen, self.pixel_to_fill, c, cv2.FILLED)
             cvzone.putTextRect(frame, txt, (cen[0] + 20, cen[1] + 10), offset=1, scale=2, thickness=2)
-
+        
         return frame
 
     # Method to initialize video-related parameters (width, height, frame count, fps)

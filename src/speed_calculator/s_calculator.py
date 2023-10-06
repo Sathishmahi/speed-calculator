@@ -5,6 +5,7 @@ from ultralytics import YOLO
 import numpy as np
 import cvzone
 import os
+from random import randint
 import cv2
 from tqdm import tqdm
 
@@ -39,10 +40,28 @@ class SpeedCalCulator:
         self.distance_bet_l1_l2_in_px = self.params.get("distance_bet_l1_l2_in_px")
         self.model_name = self.params.get("model_name")
         self.one_px = self.l1_l2_m/self.distance_bet_l1_l2_in_px
+        self.speed_limit = 35
+        self.color_dict = {}
+        self.legend_dict = {
+            "red":["over speed", (0,0,255),(1100,40)],
+            "green":["normal speed", (0,255,0),(1100,80)],
+        }
+        self.pixel_to_fill = 20
 
     def model_initializer(self):
 
         self.model = YOLO(self.model_name)
+
+
+    def color_provider(self,id):
+        color = [ randint(0,256) for _ in range(3)]
+        if id in self.color_dict:return self.color_dict[id]
+        else:
+            if color in self.color_dict.values():
+                while True:
+                    color = [ randint(0,256) for _ in range(3)]
+                    if color not in self.color_dict.values():break
+            self.color_dict[id] = color
 
     def process(self,frame,c):
         for p in [self.line1_coor,self.line2_coor]:
@@ -59,7 +78,7 @@ class SpeedCalCulator:
                 if center_point[-1] < 150 and center_point[-1] > 120:
                     self.car_in.append(id)
                     # cv2.putText( frame,f"#entre car {id}",(x1,y1-20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                    cvzone.putTextRect( frame,f"#entre car {id}",(x1,y1-20),offset=1,scale=1,thickness=1)
+                    cvzone.putTextRect( frame,f"#entre car {id}",(x1,y1-40),offset=1,scale=1,thickness=1)
 
                     if id not in self.car_in_dict and id not in self.already_calculated_list :
                         self.car_in_dict[id] = {"frame":c,"y_centre":center_point[-1]}
@@ -73,7 +92,7 @@ class SpeedCalCulator:
                 if center_point[-1] > 500:
                     self.car_out.append(id)
                     # cv2.putText( frame,f"#exit car {id}",(x1,y1-20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                    cvzone.putTextRect( frame,f"#exit car {id}",(x1,y1-20),offset=2,scale=1,thickness=1)
+                    cvzone.putTextRect( frame,f"#exit car {id}",(x1,y1-40),offset=1,scale=1,thickness=1)
                     
                     if id not in self.car_out_dict and id not in self.already_calculated_list:
                         self.car_out_count += 1
@@ -82,30 +101,47 @@ class SpeedCalCulator:
                             frame_count_sec = (self.car_out_dict[id]["frame"] - self.car_in_dict[id]["frame"])/self.fps
                             one_sec  = frame_count_sec/frame_count_sec
                             centre_point_diff_mtr = ((self.car_out_dict[id]["y_centre"] - self.car_in_dict[id]["y_centre"])*self.one_px)/frame_count_sec
-                            self.speed_list.appedpend({"id":id,"speed":centre_point_diff_mtr})
+                            self.speed_list.append({"id":id,"speed":centre_point_diff_mtr})
                             # cv2.putText( frame,f"#id {id} : {centre_point_diff_mtr:.1f}",(x1,y1-30),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
                             # cvzone.putTextRect( frame,f"#id {id} : {centre_point_diff_mtr:.1f}",(x1,y1-30),offset=1,scale=1,thickness=1)
-                            s=0
-                            for speed_dict in self.speed_list:
-                                cvzone.putTextRect( frame,f"#id {speed_dict['id']} : {speed_dict['speed']:.1f}",(0,s),
-                                offset=1,scale=1,thickness=1)
-                                s+=10
-                            self.already_calculated_list.append(id)
+                            # s=0
+                            # for speed_dict in self.speed_list:
+                            #     cvzone.putTextRect( frame,f"#id {speed_dict['id']} : {speed_dict['speed']:.1f}",(0,s),
+                            #     offset=1,scale=1,thickness=1)
+                            #     s+=10
+                            # self.already_calculated_list.append(id)
 
                 self.frame_1 = False
-                cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,0),1)
+                color = self.color_provider(id)
+                cv2.rectangle(frame,(x1,y1),(x2,y2),color,2)
                 # cv2.putText( frame,f"#id {id}",(x1,y1-10),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
                 cvzone.putTextRect( frame,f"#id {id}",(x1,y1-10) ,offset=1,scale=1,thickness=1)
         # cv2.putText( frame,f"#CAR IN COUNT  {self.car_in_count}",(50,50),cv2.FONT_HERSHEY_COMPLEX,0.6,(0,0,0),2 )
         # cv2.putText( frame,f"#CAR OUT COUNT  {self.car_out_count}",(50,70),cv2.FONT_HERSHEY_COMPLEX,0.6,(0,0,0),2 )
     
-        cvzone.putTextRect( frame,f"#CAR IN COUNT  {self.car_in_count}",(int(self.w/2),0) ,offset=1,scale=1,thickness=1)
+        cvzone.putTextRect( frame,f"#CAR IN COUNT  {self.car_in_count}",(int(self.w/2),20),colorR=(0, 255, 0),offset=1,scale=2,thickness=2)
     
-        cvzone.putTextRect( frame,f"#CAR OUT COUNT  {self.car_out_count}",(int(self.w/2),10) ,offset=1,scale=1,thickness=1)
+        cvzone.putTextRect( frame,f"#CAR OUT COUNT  {self.car_out_count}",(int(self.w/2),50) ,colorR=(0, 0, 255),offset=1,scale=2,thickness=2)
         
-        # for speed in self.speed_list:
-        #     s+=10
-        #     cvzone.putTextRect( frame,f"{speed:.1f}",(0,s),offset=1,scale=1,thickness=1)
+        s=30
+        for speed_dict in self.speed_list:
+            id,speed = speed_dict["id"],speed_dict["speed"]
+            colorR = (0,0,255) if speed > self.speed_limit else (0,255,0) 
+                
+            cvzone.putTextRect( frame,f"#id {id} : {speed:.1f} m/s",(0,s),
+            offset=1,scale=1,thickness=1,colorR=colorR)
+            s+=20
+        
+        for leg in self.legend_dict.values():
+            # "red":["over speed", (0,0,255),(1100,40)],
+            txt=leg[0] 
+            c = leg[1]
+            cen = leg[-1]
+
+            cv2.circle(frame, cen, self.pixel_to_fill, c, cv2.FILLED)
+            cvzone.putTextRect( frame,txt,(c[0],c[1]+10) ,offset=1,scale=1,thickness=1)
+
+
         return frame
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import cvzone
 import os
 import cv2
+from tqdm import tqdm
 
 
 class SpeedCalCulator:
@@ -58,17 +59,21 @@ class SpeedCalCulator:
                 if center_point[-1] < 150 and center_point[-1] > 120:
                     self.car_in.append(id)
                     # cv2.putText( frame,f"#entre car {id}",(x1,y1-20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                    cvzone.putTextRect( frame,f"#entre car {id}",(x1,y1-20),offset=2)
+                    cvzone.putTextRect( frame,f"#entre car {id}",(x1,y1-20),offset=1,scale=1,thickness=1)
 
                     if id not in self.car_in_dict and id not in self.already_calculated_list :
                         self.car_in_dict[id] = {"frame":c,"y_centre":center_point[-1]}
                         self.car_in_count += 1
 
 
+# (img: Any, text: Any, pos: Any, scale: int = 3, thickness: int = 3, colorT: Any = (255, 255, 255), colorR: Any = (255, 0, 255), 
+# font: int = cv2.FONT_HERSHEY_PLAIN, offset: int = 10, border: Any | None = None, colorB: Any = (0, 255, 0))
+
+
                 if center_point[-1] > 500:
                     self.car_out.append(id)
                     # cv2.putText( frame,f"#exit car {id}",(x1,y1-20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                    cvzone.putTextRect( frame,f"#exit car {id}",(x1,y1-20),offset=2)
+                    cvzone.putTextRect( frame,f"#exit car {id}",(x1,y1-20),offset=2,scale=1,thickness=1)
                     
                     if id not in self.car_out_dict and id not in self.already_calculated_list:
                         self.car_out_count += 1
@@ -77,20 +82,30 @@ class SpeedCalCulator:
                             frame_count_sec = (self.car_out_dict[id]["frame"] - self.car_in_dict[id]["frame"])/self.fps
                             one_sec  = frame_count_sec/frame_count_sec
                             centre_point_diff_mtr = ((self.car_out_dict[id]["y_centre"] - self.car_in_dict[id]["y_centre"])*self.one_px)/frame_count_sec
-                            cv2.putText( frame,f"#id {id} : {centre_point_diff_mtr:.1f}",(x1,y1-30),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                            
+                            self.speed_list.appedpend({"id":id,"speed":centre_point_diff_mtr})
+                            # cv2.putText( frame,f"#id {id} : {centre_point_diff_mtr:.1f}",(x1,y1-30),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
+                            # cvzone.putTextRect( frame,f"#id {id} : {centre_point_diff_mtr:.1f}",(x1,y1-30),offset=1,scale=1,thickness=1)
+                            s=0
+                            for speed_dict in self.speed_list:
+                                cvzone.putTextRect( frame,f"#id {speed_dict['id']} : {speed_dict['speed']:.1f}",(0,s),
+                                offset=1,scale=1,thickness=1)
+                                s+=10
                             self.already_calculated_list.append(id)
 
                 self.frame_1 = False
                 cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,0),1)
                 # cv2.putText( frame,f"#id {id}",(x1,y1-10),cv2.FONT_HERSHEY_COMPLEX,0.5,(0,0,0),1 )
-                cvzone.putTextRect( frame,f"#id {id}",(x1,y1-10) ,offset=2)
+                cvzone.putTextRect( frame,f"#id {id}",(x1,y1-10) ,offset=1,scale=1,thickness=1)
         # cv2.putText( frame,f"#CAR IN COUNT  {self.car_in_count}",(50,50),cv2.FONT_HERSHEY_COMPLEX,0.6,(0,0,0),2 )
         # cv2.putText( frame,f"#CAR OUT COUNT  {self.car_out_count}",(50,70),cv2.FONT_HERSHEY_COMPLEX,0.6,(0,0,0),2 )
-
-        cvzone.putTextRect( frame,f"#CAR IN COUNT  {self.car_in_count}",(50,50) ,offset=5)
-        cvzone.putTextRect( frame,f"#CAR OUT COUNT  {self.car_out_count}",(50,70) ,offset=5)
-
+    
+        cvzone.putTextRect( frame,f"#CAR IN COUNT  {self.car_in_count}",(int(self.w/2),0) ,offset=1,scale=1,thickness=1)
+    
+        cvzone.putTextRect( frame,f"#CAR OUT COUNT  {self.car_out_count}",(int(self.w/2),10) ,offset=1,scale=1,thickness=1)
+        
+        # for speed in self.speed_list:
+        #     s+=10
+        #     cvzone.putTextRect( frame,f"{speed:.1f}",(0,s),offset=1,scale=1,thickness=1)
         return frame
 
 
@@ -108,7 +123,7 @@ class SpeedCalCulator:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         writer = cv2.VideoWriter(output_video_path,fourcc,self.fps,(self.w,self.h))
 
-        for c in range(self.fc):
+        for c in tqdm(range(self.fc)):
 
             suc,frame = cap.read()
             out_frame = self.process(frame, c)
@@ -144,5 +159,7 @@ class SpeedCalCulator:
 
 
 if __name__ == "__main__":
+    print(f"<<<<<  START   >>>>>")
     sc = SpeedCalCulator()
     sc.combine_all()
+    print(f"<<<<<  END   >>>>>")
